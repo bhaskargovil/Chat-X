@@ -127,4 +127,14 @@ const logout = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "logout successful"));
 });
 
-export { signup, login, logout };
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+  if (!user)
+    throw new ApiError(500, "didn't receive the user info from the middleware");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "user details delivered"));
+});
+
+export { signup, login, logout, getCurrentUser };
