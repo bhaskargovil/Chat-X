@@ -137,4 +137,18 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "user details delivered"));
 });
 
-export { signup, login, logout, getCurrentUser };
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  const { accessToken, refreshToken } = generateAccessAndRefreshTokens(
+    user._id
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "tokens generated"))
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions);
+});
+
+export { signup, login, logout, getCurrentUser, refreshAccessToken };
