@@ -1,0 +1,207 @@
+import { Post } from "../models/post.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { v2 as cloudinary } from "cloudinary";
+import { Notification } from "../models/notification.model.js";
+import { User } from "../models/auth.model.js";
+
+const createPost = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  const { text, img } = req.body;
+
+  if (!text) throw new ApiError(400, "post should have some text");
+
+  let imgLink;
+  if (img) {
+    const upload = await cloudinary.uploader.upload(img);
+    imgLink = upload.secure_url;
+  }
+
+  const post = await Post.create({
+    user: user._id,
+    text,
+    img: imgLink || "",
+  });
+
+  if (!post) throw new ApiError(500, "post db error");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, post, "post created successfully"));
+});
+
+const deletePost = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const { postId } = req.body;
+
+  if (!postId) throw new ApiError(400, "post id is required");
+
+  const post = await Post.findById(postId);
+
+  if (!(post.user == user._id.toString()))
+    throw new ApiError(400, "user is not the owner of this post");
+
+  if (post.img)
+    await cloudinary.uploader.destroy(post.img.split("/").pop().split(".")[0]);
+
+  await Post.findByIdAndDelete(postId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "post deleted successfully"));
+});
+
+const commentOnPost = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  const { text, postId } = req.body;
+
+  if (!text || !postId) throw new ApiError(400, "missing fields");
+
+  const post = await Post.findByIdAndUpdate(postId, {
+    $push: {
+      comments: {
+        text,
+        user: user._id,
+      },
+    },
+  });
+
+  if (!post) throw new ApiError(500, "post db error");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, post.comments, "comment added successfully"));
+});
+
+const likeUnlikePost = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const { postId } = req.body;
+
+  if (!postId) throw new ApiError(400, "postId missing");
+
+  const post = await Post.findById(postId);
+
+  if (!post) throw new ApiError(400, "incorrect postId");
+
+  const alreadyLiked = post.likes.includes(user._id);
+
+  let notification;
+
+  if (alreadyLiked) {
+    await User.findByIdAndUpdate(user._id, {
+      $pull: {
+        likedPost: post._id,
+      },
+    });
+    await Post.findByIdAndUpdate(post._id, {
+      $pull: {
+        likes: user._id,
+      },
+    });
+    notification = await Notification.create({
+      from: post.user,
+      to: user._id,
+      type: "unlike",
+    });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, notification, "unliked successfully"));
+  } else {
+    await User.findByIdAndUpdate(user._id, {
+      $push: {
+        likedPost: post._id,
+      },
+    });
+    await Post.findByIdAndUpdate(postId, {
+      $push: {
+        likes: user._id,
+      },
+    });
+    notification = await Notification.create({
+      from: post.user,
+      to: user._id,
+      type: "like",
+    });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, notification, "liked successfully"));
+  }
+});
+
+const getAllPosts = asyncHandler(async (req, res) => {
+  const allPosts = await Post.find()
+    .sort({ createdAt: -1 })
+    .populate({
+      path: "user",
+      select: "-password -refreshToken",
+    })
+    .populate({
+      path: "comments.user",
+      select: "-password -refreshToken",
+    });
+
+  if (allPosts.length == 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "no posts to display"));
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, allPosts, "posts delivered"));
+});
+
+const getAllLikedPosts = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  const allLikedPosts = await Post.find({ _id: { $in: user.likedPost } })
+    .populate({
+      path: "user",
+      select: "-password -refreshToken",
+    })
+    .populate({
+      path: "comments.user",
+      select: "-password -refreshToken",
+    });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, allLikedPosts, "all liked posts displayed"));
+});
+
+const getFollowingPosts = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  const user = await User.findById(userId).select("-password -refreshToken");
+  if (!user) throw new ApiError(400, "incorrect userID");
+
+  const following = user.following;
+
+  const post = await Post.find({ user: { $in: following } }).sort({
+    createdAt: -1,
+  });
+
+  return res.status(200).json(new ApiResponse(200, post, "all posts shown"));
+});
+
+const getUserPosts = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  const posts = await Post.find({ user: user._id });
+
+  return res.status(200).json(new ApiResponse(200, posts, "user posts shown"));
+});
+
+export {
+  createPost,
+  deletePost,
+  commentOnPost,
+  likeUnlikePost,
+  getAllPosts,
+  getAllLikedPosts,
+  getFollowingPosts,
+  getUserPosts,
+};
