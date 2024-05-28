@@ -51,8 +51,8 @@ const followUnfollow = asyncHandler(async (req, res) => {
     });
 
     const notification = await Notification.create({
-      from: user._id,
-      to: toBeFollowedUser._id,
+      from: toBeFollowedUser._id,
+      to: user._id,
       type: "unfollow",
     });
 
