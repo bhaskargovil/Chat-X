@@ -8,9 +8,6 @@ import { Link } from "react-router-dom";
 
 function Login() {
   const [togglePassword, setTogglePassword] = useState(false);
-  const showPassword = () => {
-    setTogglePassword(!togglePassword);
-  };
   const [formdata, setFormdata] = useState({
     username: "",
     password: "",
@@ -63,12 +60,16 @@ function Login() {
             />
             {togglePassword ? (
               <IoMdEyeOff
-                onClick={showPassword}
+                onClick={() => {
+                  setTogglePassword(!togglePassword);
+                }}
                 className="cursor-pointer hover:bg-gray-600 rounded-full"
               />
             ) : (
               <MdRemoveRedEye
-                onClick={showPassword}
+                onClick={() => {
+                  setTogglePassword(!togglePassword);
+                }}
                 className="cursor-pointer hover:bg-gray-600 rounded-full"
               />
             )}

@@ -11,9 +11,7 @@ import { Link } from "react-router-dom";
 
 function SignUp() {
   const [togglePassword, setTogglePassword] = useState(false);
-  const showPassword = () => {
-    setTogglePassword(!togglePassword);
-  };
+
   const [formdata, setFormdata] = useState({
     email: "",
     username: "",
@@ -87,12 +85,16 @@ function SignUp() {
             />
             {togglePassword ? (
               <IoMdEyeOff
-                onClick={showPassword}
+                onClick={() => {
+                  setTogglePassword(!togglePassword);
+                }}
                 className="cursor-pointer hover:bg-gray-600 rounded-full"
               />
             ) : (
               <MdRemoveRedEye
-                onClick={showPassword}
+                onClick={() => {
+                  setTogglePassword(!togglePassword);
+                }}
                 className="cursor-pointer hover:bg-gray-600 rounded-full"
               />
             )}
