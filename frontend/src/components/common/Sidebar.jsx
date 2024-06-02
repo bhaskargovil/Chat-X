@@ -1,16 +1,36 @@
 import XSvg from "../svgs/X";
-
+import { useSelector, useDispatch } from "react-redux";
 import { MdHomeFilled } from "react-icons/md";
 import { IoNotifications } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
+import { logout } from "../../store/authSlice";
 
 const Sidebar = () => {
-  const data = {
-    fullName: "John Doe",
-    username: "johndoe",
-    profileImg: "/avatars/boy1.png",
+  const userData = useSelector((state) => state.userData);
+  const data = userData.data;
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const logoutHandler = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/logout", {
+        method: "GET",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Logout error");
+    } catch (error) {
+      throw error.message;
+    }
+
+    dispatch(logout());
+    navigate("/");
   };
 
   return (
@@ -62,11 +82,17 @@ const Sidebar = () => {
             <div className="flex justify-between flex-1">
               <div className="hidden md:block">
                 <p className="text-white font-bold text-sm w-20 truncate">
-                  {data?.fullName}
+                  {data?.fullname}
                 </p>
                 <p className="text-slate-500 text-sm">@{data?.username}</p>
               </div>
-              <BiLogOut className="w-5 h-5 cursor-pointer" />
+              <BiLogOut
+                className="w-5 h-5 cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  logoutHandler();
+                }}
+              />
             </div>
           </Link>
         )}

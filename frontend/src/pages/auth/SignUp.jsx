@@ -1,34 +1,70 @@
 import React, { useState } from "react";
 import XSvg from "../../components/svgs/X";
-
+import { useForm } from "react-hook-form";
 import { MdEmail } from "react-icons/md";
 import { RiLockPasswordFill } from "react-icons/ri";
 import { MdDriveFileRenameOutline } from "react-icons/md";
 import { IoPersonSharp } from "react-icons/io5";
 import { MdRemoveRedEye } from "react-icons/md";
 import { IoMdEyeOff } from "react-icons/io";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { login } from "../../store/authSlice.js";
 
 function SignUp() {
   const [togglePassword, setTogglePassword] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const [formdata, setFormdata] = useState({
-    email: "",
-    username: "",
-    fullname: "",
-    password: "",
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    getValues: formValues,
+  } = useForm({
+    defaultValues: {
+      email: "",
+      username: "",
+      fullname: "",
+      password: "",
+    },
   });
 
-  const submitHandler = (e) => {
-    console.log(formdata);
+  const { mutate, isError, isPending, error } = useMutation({
+    mutationFn: async ({ username, password, email, fullname }) => {
+      const res = await fetch("http://localhost:8000/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password, fullname, email }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error("Something went wrong");
+
+      dispatch(login(data));
+      navigate("/");
+    },
+    onSuccess: () => {
+      toast.success("Sign up Successful");
+    },
+    onError: () => {
+      toast.error("Sign up failed");
+    },
+  });
+
+  const submitHandler = () => {
+    mutate(formValues());
   };
 
   const handleInputChange = (e) => {
     e.preventDefault();
-    setFormdata({ ...formdata, [e.target.name]: [e.target.value] });
+    setValue(e.target.name, e.target.value);
   };
 
-  const [isError, setIsError] = useState(false);
   return (
     <div className="mx-auto flex h-screen px-10">
       <div className="flex-1 hidden lg:flex items-center">
@@ -36,7 +72,7 @@ function SignUp() {
       </div>
       <div className="flex-1 flex flex-col justify-center items-center">
         <form
-          onSubmit={submitHandler}
+          onSubmit={handleSubmit(submitHandler)}
           className="lg:w-2/3  mx-auto md:mx-20 flex gap-4 flex-col"
         >
           <h1 className="text-4xl font-extrabold text-white">Join today.</h1>
@@ -46,9 +82,8 @@ function SignUp() {
               type="text"
               className="grow"
               placeholder="Email"
-              name="email"
               onChange={handleInputChange}
-              value={formdata.email}
+              {...register("email", { required: true })}
             />
           </label>
           <label className="input input-bordered rounded flex items-center gap-2 w-full">
@@ -57,9 +92,8 @@ function SignUp() {
               type="text"
               className="grow pr-6"
               placeholder="Username"
-              name="username"
               onChange={handleInputChange}
-              value={formdata.username}
+              {...register("username", { required: true })}
             />
           </label>
           <label className="input input-bordered rounded flex items-center gap-2 w-full">
@@ -68,9 +102,8 @@ function SignUp() {
               type="text"
               className="grow pr-6"
               placeholder="Full Name"
-              name="fullname"
               onChange={handleInputChange}
-              value={formdata.fullname}
+              {...register("fullname", { required: true })}
             />
           </label>
           <label className="input input-bordered rounded flex items-center gap-2 w-full">
@@ -79,9 +112,8 @@ function SignUp() {
               type={`${togglePassword ? "text" : "password"}`}
               className="grow"
               placeholder="Password"
-              name="password"
               onChange={handleInputChange}
-              value={formdata.password}
+              {...register("password", { required: true })}
             />
             {togglePassword ? (
               <IoMdEyeOff
@@ -103,12 +135,10 @@ function SignUp() {
             type="submit"
             className="btn bg-blue-500 rounded-full hover:bg-blue-900 text-base"
           >
-            Sign Up
+            {isPending ? "Loading..." : "Sign Up"}
           </button>
           {isError && (
-            <p className="text-red-500 text-center text-md">
-              Something went wrong...
-            </p>
+            <p className="text-red-500 text-center text-md">{error.message}</p>
           )}
           <div className="flex flex-col gap-3">
             <p>Already have an account?</p>
