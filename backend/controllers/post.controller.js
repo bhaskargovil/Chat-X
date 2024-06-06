@@ -102,8 +102,8 @@ const likeUnlikePost = asyncHandler(async (req, res) => {
       },
     });
     notification = await Notification.create({
-      from: post.user,
-      to: user._id,
+      from: user._id,
+      to: post.user,
       type: "unlike",
     });
     return res
@@ -121,8 +121,8 @@ const likeUnlikePost = asyncHandler(async (req, res) => {
       },
     });
     notification = await Notification.create({
-      from: post.user,
-      to: user._id,
+      from: user._id,
+      to: post.user,
       type: "like",
     });
     return res
