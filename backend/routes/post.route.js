@@ -19,8 +19,8 @@ router.post("/delete", deletePost);
 router.post("/comment", commentOnPost);
 router.post("/like", likeUnlikePost);
 router.get("/allposts", getAllPosts);
-router.get("/alllikedposts", getAllLikedPosts);
+router.get("/alllikedposts/:username", getAllLikedPosts);
 router.get("/allfollowingposts", getFollowingPosts);
-router.get("/posts", getUserPosts);
+router.get("/posts/:username", getUserPosts);
 
 export default router;

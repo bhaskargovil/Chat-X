@@ -2,23 +2,53 @@ import { CiImageOn } from "react-icons/ci";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 const CreatePost = () => {
+  const { data: userData } = useQuery({ queryKey: ["authUser"] });
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);
 
   const imgRef = useRef(null);
+  const queryClient = useQueryClient();
 
-  const isPending = false;
-  const isError = false;
+  const {
+    mutate: createPost,
+    isPending,
+    isError,
+  } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("http://localhost:8000/api/post/create", {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+        credentials: "include",
+      });
+
+      const jsonData = await res.json();
+      const data = jsonData.data;
+
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Post created Successfully");
+      setText("");
+      setImg(null);
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
 
   const data = {
-    profileImg: "/avatars/boy1.png",
+    profileImg: userData.profileImg,
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert("Post created successfully");
+    createPost();
   };
 
   const handleImgChange = (e) => {

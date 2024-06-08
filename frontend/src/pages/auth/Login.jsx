@@ -6,9 +6,7 @@ import { MdRemoveRedEye } from "react-icons/md";
 import { IoMdEyeOff } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
-import { useDispatch } from "react-redux";
-import { login } from "../../store/authSlice.js";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner.jsx";
 
@@ -27,7 +25,7 @@ function Login() {
     },
   });
 
-  const dispatch = useDispatch();
+  const queryClient = useQueryClient();
 
   const { mutate, isError, isPending } = useMutation({
     mutationFn: async ({ username, password }) => {
@@ -44,12 +42,11 @@ function Login() {
       const data = await res.json();
 
       if (!res.ok) throw new Error("Something went wrong");
-
-      dispatch(login(data));
-      navigate("/");
     },
     onSuccess: () => {
       toast.success("Login Successfull");
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      navigate("/");
     },
     onError: () => {
       toast.error("Login Failed");

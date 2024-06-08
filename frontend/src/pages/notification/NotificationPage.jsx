@@ -1,41 +1,61 @@
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa6";
-import Sidebar from "../../components/common/Sidebar";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 const NotificationPage = () => {
-  const isLoading = false;
-  const notifications = [
-    {
-      _id: "1",
-      from: {
-        _id: "1",
-        username: "johndoe",
-        profileImg: "/avatars/boy2.png",
-      },
-      type: "follow",
-    },
-    {
-      _id: "2",
-      from: {
-        _id: "2",
-        username: "janedoe",
-        profileImg: "/avatars/girl1.png",
-      },
-      type: "like",
-    },
-  ];
+  const { data: notifications, isLoading } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await fetch("http://localhost:8000/api/notifications", {
+        mode: "cors",
+        method: "GET",
+        credentials: "include",
+      });
 
-  const deleteNotifications = () => {
-    alert("All notifications deleted");
+      if (!res.ok) throw new Error("Couldn't fetch notifications");
+      const data = await res.json();
+
+      return data.data;
+    },
+  });
+
+  const queryClient = useQueryClient();
+
+  const { mutate: deleteNotifications } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("http://localhost:8000/api/notifications", {
+        mode: "cors",
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Couldn't delete notifications");
+    },
+    onSuccess: () => {
+      toast.success("Notifications deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const notificationMessage = (type) => {
+    switch (type) {
+      case "follow":
+        return "followed you";
+      case "unfollow":
+        return "unfollowed you";
+      case "like":
+        return "liked your post";
+      case "unlike":
+        return "unliked your post";
+    }
   };
 
   return (
     <>
-      <Sidebar />
       <div className="flex-[4_4_0] border-l border-r border-gray-700 min-h-screen">
         <div className="flex justify-between items-center p-4 border-b border-gray-700">
           <p className="font-bold">Notifications</p>
@@ -85,9 +105,7 @@ const NotificationPage = () => {
                   <span className="font-bold">
                     @{notification.from.username}
                   </span>{" "}
-                  {notification.type === "follow"
-                    ? "followed you"
-                    : "liked your post"}
+                  {notificationMessage(notification.type)}
                 </div>
               </Link>
             </div>

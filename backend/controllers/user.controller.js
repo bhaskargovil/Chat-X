@@ -71,8 +71,8 @@ const followUnfollow = asyncHandler(async (req, res) => {
     });
 
     const notification = await Notification.create({
-      from: toBeFollowedUser._id,
-      to: user._id,
+      from: user._id,
+      to: toBeFollowedUser._id,
       type: "follow",
     });
 
@@ -123,10 +123,33 @@ const getSuggestedUsers = asyncHandler(async (req, res) => {
 
 const updateUserProfile = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
-  const { fullname, username, email, password, bio, link } = req.body;
+  const { fullname, username, email, currentPassword, bio, link, newPassword } =
+    req.body;
   let { profileImg, coverImg } = req.body;
 
   const user = await User.findById(userId);
+
+  if (profileImg) {
+    if (user.profileImage) {
+      await cloudinary.uploader.destroy(
+        user.profileImage.split("/").pop().split(".")[0]
+      );
+    }
+
+    const uploadedResponse = await cloudinary.uploader.upload(profileImg);
+    profileImg = uploadedResponse.secure_url;
+  }
+
+  if (coverImg) {
+    if (user.coverImage) {
+      await cloudinary.uploader.destroy(
+        user.coverImage.split("/").pop().split(".")[0]
+      );
+    }
+
+    const uploadedResponse = await cloudinary.uploader.upload(coverImg);
+    coverImg = uploadedResponse.secure_url;
+  }
 
   if (username) {
     let existingUser = await User.find({ username: username });
@@ -147,30 +170,10 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
   let hashedPassword;
 
-  if (password) {
-    const isPasswordSame = await bcrypt.compare(password, user.password);
-    if (isPasswordSame) throw new ApiError(400, "password can't be same");
-    hashedPassword = await bcrypt.hash(password, 10);
-  }
-
-  if (profileImg) {
-    if (user.profileImage) {
-      await cloudinary.uploader.destroy(
-        user.profileImage.split("/").pop().split(".")[0]
-      );
-    }
-    const upload = await cloudinary.uploader.upload(profileImg);
-    profileImg = upload.secure_url;
-  }
-
-  if (coverImg) {
-    if (user.coverImage) {
-      await cloudinary.uploader.destroy(
-        user.coverImage.split("/").pop().split(".")[0]
-      );
-    }
-    const upload = await cloudinary.uploader.upload(coverImg);
-    coverImg = upload.secure_url;
+  if (currentPassword && newPassword) {
+    const isPasswordSame = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordSame) throw new ApiError(400, "incorrect password");
+    hashedPassword = await bcrypt.hash(newPassword, 10);
   }
 
   const newUser = await User.findByIdAndUpdate(
@@ -182,8 +185,8 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       password: hashedPassword || user.password,
       bio: bio || user.bio,
       link: link || user.link,
-      profileImage: profileImg || user.profileImage,
-      coverImage: coverImg || user.coverImage,
+      profileImage: profileImg?.url || user.profileImage,
+      coverImage: coverImg?.url || user.coverImage,
     },
     { new: true }
   ).select("-password -refreshToken");

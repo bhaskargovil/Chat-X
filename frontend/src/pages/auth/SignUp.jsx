@@ -10,12 +10,10 @@ import { IoMdEyeOff } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
-import { login } from "../../store/authSlice.js";
 
 function SignUp() {
   const [togglePassword, setTogglePassword] = useState(false);
-  const dispatch = useDispatch();
+
   const navigate = useNavigate();
 
   const {
@@ -45,7 +43,6 @@ function SignUp() {
 
       if (!res.ok) throw new Error("Something went wrong");
 
-      dispatch(login(data));
       navigate("/");
     },
     onSuccess: () => {

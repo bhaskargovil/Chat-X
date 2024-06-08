@@ -5,24 +5,26 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { v2 as cloudinary } from "cloudinary";
 import { Notification } from "../models/notification.model.js";
 import { User } from "../models/auth.model.js";
+import uploadOnCloudinary from "../utils/cloudinary.js";
 
 const createPost = asyncHandler(async (req, res) => {
   const user = req.user;
 
-  const { text, img } = req.body;
+  const { text } = req.body;
+  let imageLocalFilePath;
 
   if (!text) throw new ApiError(400, "post should have some text");
 
-  let imgLink;
-  if (img) {
-    const upload = await cloudinary.uploader.upload(img);
-    imgLink = upload.secure_url;
+  if (req.files && Array.isArray(req.files.img) && req.files.img[0]) {
+    imageLocalFilePath = req.files.img[0].path;
   }
+
+  const img = await uploadOnCloudinary(imageLocalFilePath);
 
   const post = await Post.create({
     user: user._id,
     text,
-    img: imgLink || "",
+    img: img?.url || "",
   });
 
   if (!post) throw new ApiError(500, "post db error");
@@ -155,7 +157,9 @@ const getAllPosts = asyncHandler(async (req, res) => {
 });
 
 const getAllLikedPosts = asyncHandler(async (req, res) => {
-  const user = req.user;
+  const { username } = req.params;
+
+  const user = await User.findOne({ username });
 
   const allLikedPosts = await Post.find({ _id: { $in: user.likedPost } })
     .populate({
@@ -188,11 +192,23 @@ const getFollowingPosts = asyncHandler(async (req, res) => {
 });
 
 const getUserPosts = asyncHandler(async (req, res) => {
-  const user = req.user;
+  const { username } = req.params;
 
-  const posts = await Post.find({ user: user._id });
+  const user = await User.findOne({ username });
+  if (!user) throw new ApiError(200, "user not found");
 
-  return res.status(200).json(new ApiResponse(200, posts, "user posts shown"));
+  const posts = await Post.find({ user: user._id })
+    .sort({ createdAt: -1 })
+    .populate({
+      path: "user",
+      select: "-password",
+    })
+    .populate({
+      path: "comments.user",
+      select: "-password",
+    });
+
+  return res.status(200).json(new ApiResponse(200, posts, "posts shown"));
 });
 
 export {

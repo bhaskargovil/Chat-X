@@ -1,37 +1,42 @@
 import XSvg from "../svgs/X";
-import { useSelector, useDispatch } from "react-redux";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { MdHomeFilled } from "react-icons/md";
 import { IoNotifications } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
-import { logout } from "../../store/authSlice";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Sidebar = () => {
-  const userData = useSelector((state) => state.userData);
-  const data = userData.data;
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const logoutHandler = async () => {
-    try {
-      const res = await fetch("http://localhost:8000/api/auth/logout", {
-        method: "GET",
-        mode: "cors",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
+  const { mutate: logout } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/auth/logout", {
+          method: "GET",
+          mode: "cors",
+          credentials: "include",
+        });
+        const data = await res.json();
 
-      if (!res.ok) throw new Error("Logout error");
-    } catch (error) {
-      throw error.message;
-    }
+        if (!res.ok) {
+          throw new Error(data.error || "Something went wrong");
+        }
+      } catch (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      window.location.reload();
+    },
+    onError: () => {
+      toast.error("Logout failed");
+    },
+  });
 
-    dispatch(logout());
-    navigate("/");
-  };
+  const { data } = useQuery({ queryKey: ["authUser"] });
 
   return (
     <div className="md:flex-[2_2_0] w-18 max-w-52">
@@ -71,7 +76,7 @@ const Sidebar = () => {
         </ul>
         {data && (
           <Link
-            to={`/profile/${data.username}`}
+            to={`/profile/${data?.username}`}
             className="mt-auto mb-10 flex gap-2 items-start transition-all duration-300 hover:bg-[#181818] py-2 px-4 rounded-full"
           >
             <div className="avatar hidden md:inline-flex">
@@ -90,7 +95,7 @@ const Sidebar = () => {
                 className="w-5 h-5 cursor-pointer"
                 onClick={(e) => {
                   e.preventDefault();
-                  logoutHandler();
+                  logout();
                 }}
               />
             </div>
