@@ -6,7 +6,7 @@ export function useProfileUpdate() {
 
   const { mutateAsync: updateDetails, isPending } = useMutation({
     mutationFn: async (formdata) => {
-      const res = await fetch("http://localhost:8000/api/user/update", {
+      const res = await fetch("/api/user/update", {
         method: "POST",
         mode: "cors",
         headers: {

@@ -12,7 +12,6 @@ import { PostDate } from "../../utils/date";
 import { useFollow } from "../../components/hooks/useFollow.jsx";
 import LoadingSpinner from "../../components/common/LoadingSpinner.jsx";
 import { useProfileUpdate } from "../../components/hooks/useProfileUpdate.jsx";
-import { set } from "mongoose";
 
 const ProfilePage = () => {
   const { data: userData } = useQuery({ queryKey: ["authUser"] });
@@ -35,7 +34,7 @@ const ProfilePage = () => {
   } = useQuery({
     queryKey: ["userProfile"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/user/profile", {
+      const res = await fetch("/api/user/profile", {
         mode: "cors",
         method: "POST",
         headers: {

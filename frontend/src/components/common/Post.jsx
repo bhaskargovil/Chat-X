@@ -22,7 +22,7 @@ const Post = ({ post }) => {
 
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
-      const res = await fetch("http://localhost:8000/api/post/delete", {
+      const res = await fetch("/api/post/delete", {
         method: "POST",
         mode: "cors",
         headers: {
@@ -42,7 +42,7 @@ const Post = ({ post }) => {
 
   const { mutate: commentOnPost, isPending: isCommenting } = useMutation({
     mutationFn: async (comment) => {
-      const res = await fetch("http://localhost:8000/api/post/comment", {
+      const res = await fetch("/api/post/comment", {
         method: "POST",
         mode: "cors",
         headers: {
@@ -66,7 +66,7 @@ const Post = ({ post }) => {
 
   const { mutate: likePost, isPending: isLiking } = useMutation({
     mutationFn: async () => {
-      const res = await fetch("http://localhost:8000/api/post/like", {
+      const res = await fetch("/api/post/like", {
         method: "POST",
         mode: "cors",
         headers: {

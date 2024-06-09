@@ -5,14 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 
 const Posts = ({ feedType, username }) => {
   let POST_ENDPOINT;
-  if (feedType == "forYou")
-    POST_ENDPOINT = "http://localhost:8000/api/post/allposts";
-  if (feedType == "following")
-    POST_ENDPOINT = "http://localhost:8000/api/post/allfollowingposts";
-  if (feedType == "posts")
-    POST_ENDPOINT = `http://localhost:8000/api/post/posts/${username}`;
+  if (feedType == "forYou") POST_ENDPOINT = "/api/post/allposts";
+  if (feedType == "following") POST_ENDPOINT = "/api/post/allfollowingposts";
+  if (feedType == "posts") POST_ENDPOINT = `/api/post/posts/${username}`;
   if (feedType == "likes")
-    POST_ENDPOINT = `http://localhost:8000/api/post/alllikedposts/${username}`;
+    POST_ENDPOINT = `/api/post/alllikedposts/${username}`;
 
   const {
     data: posts,

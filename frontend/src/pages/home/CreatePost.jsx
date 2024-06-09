@@ -19,7 +19,7 @@ const CreatePost = () => {
     isError,
   } = useMutation({
     mutationFn: async () => {
-      const res = await fetch("http://localhost:8000/api/post/create", {
+      const res = await fetch("/api/post/create", {
         method: "POST",
         mode: "cors",
         headers: {

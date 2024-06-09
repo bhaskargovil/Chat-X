@@ -8,7 +8,7 @@ const RightPanel = () => {
   const { data: suggestedUsers, isLoading } = useQuery({
     queryKey: ["suggestedUsers"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/user/suggest", {
+      const res = await fetch("/api/user/suggest", {
         method: "GET",
         mode: "cors",
         credentials: "include",

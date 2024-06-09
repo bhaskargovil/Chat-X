@@ -13,7 +13,7 @@ const Sidebar = () => {
   const { mutate: logout } = useMutation({
     mutationFn: async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/auth/logout", {
+        const res = await fetch("/api/auth/logout", {
           method: "GET",
           mode: "cors",
           credentials: "include",

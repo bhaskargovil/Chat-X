@@ -7,7 +7,7 @@ export const useFollow = () => {
 
   const { mutate: follow, isPending } = useMutation({
     mutationFn: async (toBeFollowedUserID) => {
-      const res = await fetch("http://localhost:8000/api/user/follow", {
+      const res = await fetch("/api/user/follow", {
         mode: "cors",
         method: "POST",
         body: JSON.stringify({ toBeFollowedUserID }),

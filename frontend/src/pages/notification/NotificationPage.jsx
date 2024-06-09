@@ -10,7 +10,7 @@ const NotificationPage = () => {
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/notifications", {
+      const res = await fetch("/api/notifications", {
         mode: "cors",
         method: "GET",
         credentials: "include",
@@ -27,7 +27,7 @@ const NotificationPage = () => {
 
   const { mutate: deleteNotifications } = useMutation({
     mutationFn: async () => {
-      const res = await fetch("http://localhost:8000/api/notifications", {
+      const res = await fetch("/api/notifications", {
         mode: "cors",
         method: "DELETE",
         credentials: "include",
