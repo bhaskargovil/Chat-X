@@ -185,8 +185,8 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       password: hashedPassword || user.password,
       bio: bio || user.bio,
       link: link || user.link,
-      profileImage: profileImg?.url || user.profileImage,
-      coverImage: coverImg?.url || user.coverImage,
+      profileImage: profileImg || user.profileImage,
+      coverImage: coverImg || user.coverImage,
     },
     { new: true }
   ).select("-password -refreshToken");

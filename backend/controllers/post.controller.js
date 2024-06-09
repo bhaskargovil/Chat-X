@@ -5,26 +5,30 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { v2 as cloudinary } from "cloudinary";
 import { Notification } from "../models/notification.model.js";
 import { User } from "../models/auth.model.js";
-import uploadOnCloudinary from "../utils/cloudinary.js";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const createPost = asyncHandler(async (req, res) => {
   const user = req.user;
 
   const { text } = req.body;
-  let imageLocalFilePath;
+  let { img } = req.body;
 
   if (!text) throw new ApiError(400, "post should have some text");
 
-  if (req.files && Array.isArray(req.files.img) && req.files.img[0]) {
-    imageLocalFilePath = req.files.img[0].path;
+  if (img) {
+    const uploadedResponse = await cloudinary.uploader.upload(img);
+    img = uploadedResponse.secure_url;
   }
-
-  const img = await uploadOnCloudinary(imageLocalFilePath);
 
   const post = await Post.create({
     user: user._id,
     text,
-    img: img?.url || "",
+    img,
   });
 
   if (!post) throw new ApiError(500, "post db error");
