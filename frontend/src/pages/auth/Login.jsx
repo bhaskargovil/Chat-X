@@ -29,7 +29,7 @@ function Login() {
 
   const { mutate, isError, isPending } = useMutation({
     mutationFn: async ({ username, password }) => {
-      const res = await fetch("http://localhost:8000/api/auth/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         mode: "cors",
         headers: {
