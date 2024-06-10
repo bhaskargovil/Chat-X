@@ -10,6 +10,7 @@ import RightPanel from "./components/common/RightPanel";
 import Sidebar from "./components/common/Sidebar";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import { useQuery } from "@tanstack/react-query";
+import SearchPage from "./pages/search/SearchPage";
 
 function App() {
   const { data: authUser, isLoading } = useQuery({
@@ -63,6 +64,10 @@ function App() {
           <Route
             path="/profile/:username"
             element={authUser ? <ProfilePage /> : <Login />}
+          />
+          <Route
+            path="/search"
+            element={authUser ? <SearchPage /> : <Login />}
           />
         </Routes>
         {authUser && <RightPanel />}

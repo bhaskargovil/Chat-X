@@ -194,4 +194,23 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, newUser, "profile updated"));
 });
 
-export { getUserProfile, followUnfollow, getSuggestedUsers, updateUserProfile };
+const searchProfile = asyncHandler(async (req, res) => {
+  const { username } = req.body;
+  if (!username) throw new ApiError(400, "username missing");
+
+  const foundUsers = await User.find({
+    username: {
+      $regex: username,
+    },
+  });
+
+  return res.status(200).json(new ApiResponse(200, foundUsers, "users found"));
+});
+
+export {
+  getUserProfile,
+  followUnfollow,
+  getSuggestedUsers,
+  updateUserProfile,
+  searchProfile,
+};

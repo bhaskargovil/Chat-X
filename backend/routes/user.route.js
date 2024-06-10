@@ -4,6 +4,7 @@ import {
   getSuggestedUsers,
   getUserProfile,
   updateUserProfile,
+  searchProfile,
 } from "../controllers/user.controller.js";
 import { verifyAccessToken } from "../middlewares/verifyJWT.js";
 
@@ -14,5 +15,6 @@ router.route("/profile").post(getUserProfile);
 router.route("/follow").post(followUnfollow);
 router.route("/suggest").get(getSuggestedUsers);
 router.route("/update").post(updateUserProfile);
+router.route("/search").post(searchProfile);
 
 export default router;
