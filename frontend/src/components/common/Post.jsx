@@ -91,6 +91,32 @@ const Post = ({ post }) => {
     },
   });
 
+  const { mutate: commentDeleteHandler, isPending } = useMutation({
+    mutationFn: async (commentId) => {
+      const res = await fetch("/api/post/deletecomment", {
+        body: JSON.stringify({ commentId, postId: post._id }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        mode: "cors",
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Couldn't delete post");
+
+      const jsonData = await res.json();
+      return jsonData.data;
+    },
+    onSuccess: () => {
+      toast.success("Comment deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+    onError: () => {
+      toast.error("Comment couldn't be deleted");
+    },
+  });
+
   const handleDeletePost = () => {
     deletePost();
   };
@@ -102,6 +128,10 @@ const Post = ({ post }) => {
 
   const handleLikePost = () => {
     likePost();
+  };
+
+  const handleDeleteComment = (commentId) => {
+    commentDeleteHandler(commentId);
   };
 
   return (
@@ -179,28 +209,42 @@ const Post = ({ post }) => {
                       </p>
                     )}
                     {post.comments.map((comment) => (
-                      <div key={comment._id} className="flex gap-2 items-start">
-                        <div className="avatar">
-                          <div className="w-8 rounded-full">
-                            <img
-                              src={
-                                comment.user.profileImg ||
-                                "/avatar-placeholder.png"
-                              }
+                      <div
+                        key={comment._id}
+                        className="flex gap-2 items-start justify-between px-2 mb-2"
+                      >
+                        <div className="flex gap-3">
+                          <div className="avatar">
+                            <div className="w-10 rounded-full">
+                              <img
+                                src={
+                                  comment.user.profileImg ||
+                                  "/avatar-placeholder.png"
+                                }
+                              />
+                            </div>
+                          </div>
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-1">
+                              <span className="font-bold">
+                                {comment.user.fullname}
+                              </span>
+                              <span className="text-gray-700 text-sm">
+                                @{comment.user.username}
+                              </span>
+                            </div>
+                            <div className="text-sm">{comment.text}</div>
+                          </div>
+                        </div>
+                        {(comment.user._id == userData._id || isMyPost) && (
+                          <div className="hover: cursor-pointer">
+                            <FaTrash
+                              onClick={() => {
+                                handleDeleteComment(comment._id);
+                              }}
                             />
                           </div>
-                        </div>
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1">
-                            <span className="font-bold">
-                              {comment.user.fullName}
-                            </span>
-                            <span className="text-gray-700 text-sm">
-                              @{comment.user.username}
-                            </span>
-                          </div>
-                          <div className="text-sm">{comment.text}</div>
-                        </div>
+                        )}
                       </div>
                     ))}
                   </div>

@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { v2 as cloudinary } from "cloudinary";
 import { Notification } from "../models/notification.model.js";
 import { User } from "../models/auth.model.js";
+import mongoose from "mongoose";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -215,6 +216,32 @@ const getUserPosts = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, posts, "posts shown"));
 });
 
+const deleteComment = asyncHandler(async (req, res) => {
+  const { commentId, postId } = req.body;
+
+  if (!commentId || !postId) throw new ApiError(400, "missing data");
+
+  const post = await Post.findById(postId);
+
+  if (!post) throw new ApiError(500, "internal db error, can't find post");
+
+  const newPost = await Post.findByIdAndUpdate(
+    postId,
+    {
+      $pull: {
+        comments: {
+          _id: commentId,
+        },
+      },
+    },
+    { new: true }
+  );
+
+  if (!newPost) throw new ApiError(500, "db error post not updated");
+
+  return res.status(200).json(new ApiResponse(200, newPost, "comment deleted"));
+});
+
 export {
   createPost,
   deletePost,
@@ -224,4 +251,5 @@ export {
   getAllLikedPosts,
   getFollowingPosts,
   getUserPosts,
+  deleteComment,
 };

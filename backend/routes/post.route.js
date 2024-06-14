@@ -3,6 +3,7 @@ import { verifyAccessToken } from "../middlewares/verifyJWT.js";
 import {
   commentOnPost,
   createPost,
+  deleteComment,
   deletePost,
   getAllLikedPosts,
   getAllPosts,
@@ -22,5 +23,6 @@ router.get("/allposts", getAllPosts);
 router.get("/alllikedposts/:username", getAllLikedPosts);
 router.get("/allfollowingposts", getFollowingPosts);
 router.get("/posts/:username", getUserPosts);
+router.post("/deletecomment", deleteComment);
 
 export default router;
