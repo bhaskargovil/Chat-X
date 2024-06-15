@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
 import { FcLike } from "react-icons/fc";
 import { PostDate } from "../../utils/date";
+import { MdModeEdit } from "react-icons/md";
 
 const Post = ({ post }) => {
   const { data: userData } = useQuery({ queryKey: ["authUser"] });
@@ -19,6 +20,10 @@ const Post = ({ post }) => {
   const isMyPost = userData._id == post.user._id;
   const formattedDate = PostDate(post.createdAt);
   const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState({
+    state: false,
+    commentId: "",
+  });
 
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
@@ -91,31 +96,54 @@ const Post = ({ post }) => {
     },
   });
 
-  const { mutate: commentDeleteHandler, isPending } = useMutation({
-    mutationFn: async (commentId) => {
-      const res = await fetch("/api/post/deletecomment", {
-        body: JSON.stringify({ commentId, postId: post._id }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        mode: "cors",
-        method: "POST",
-        credentials: "include",
-      });
+  const { mutate: commentDeleteHandler, isPending: isDeletingComment } =
+    useMutation({
+      mutationFn: async (commentId) => {
+        const res = await fetch("/api/post/deletecomment", {
+          body: JSON.stringify({ commentId, postId: post._id }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          mode: "cors",
+          method: "POST",
+          credentials: "include",
+        });
 
-      if (!res.ok) throw new Error("Couldn't delete post");
+        if (!res.ok) throw new Error("Couldn't delete post");
 
-      const jsonData = await res.json();
-      return jsonData.data;
-    },
-    onSuccess: () => {
-      toast.success("Comment deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-    onError: () => {
-      toast.error("Comment couldn't be deleted");
-    },
-  });
+        const jsonData = await res.json();
+        return jsonData.data;
+      },
+      onSuccess: () => {
+        toast.success("Comment deleted successfully");
+        queryClient.invalidateQueries({ queryKey: ["posts"] });
+      },
+      onError: () => {
+        toast.error("Comment couldn't be deleted");
+      },
+    });
+
+  const { mutate: editCommentHandler, isPending: isEditingComment } =
+    useMutation({
+      mutationFn: async (comment) => {
+        const res = await fetch("/api/post/editcomment", {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            commentId: isEditing.commentId,
+            postId: post._id,
+            text: comment,
+          }),
+          mode: "cors",
+          method: "POST",
+          credentials: "include",
+        });
+
+        const jsonData = await res.json();
+        return jsonData.data;
+      },
+    });
 
   const handleDeletePost = () => {
     deletePost();
@@ -132,6 +160,10 @@ const Post = ({ post }) => {
 
   const handleDeleteComment = (commentId) => {
     commentDeleteHandler(commentId);
+  };
+
+  const editComment = () => {
+    editCommentHandler(comment);
   };
 
   return (
@@ -236,30 +268,55 @@ const Post = ({ post }) => {
                             <div className="text-sm">{comment.text}</div>
                           </div>
                         </div>
-                        {(comment.user._id == userData._id || isMyPost) && (
-                          <div className="hover: cursor-pointer">
-                            <FaTrash
-                              onClick={() => {
-                                handleDeleteComment(comment._id);
-                              }}
-                            />
-                          </div>
-                        )}
+                        <div className="flex gap-10">
+                          {(comment.user._id == userData._id || isMyPost) && (
+                            <div className="hover: cursor-pointer">
+                              {isDeletingComment && (
+                                <LoadingSpinner size="sm" />
+                              )}
+                              {!isDeletingComment && (
+                                <FaTrash
+                                  onClick={() => {
+                                    handleDeleteComment(comment._id);
+                                  }}
+                                />
+                              )}
+                            </div>
+                          )}
+                          {comment.user._id == userData._id && (
+                            <div className="hover: cursor-pointer">
+                              <MdModeEdit
+                                onClick={() => {
+                                  setIsEditing({
+                                    state: true,
+                                    commentId: comment._id,
+                                  });
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
                   <form
                     className="flex gap-2 items-center mt-4 border-t border-gray-600 pt-2"
-                    onSubmit={handlePostComment}
+                    onSubmit={(e) => {
+                      isEditing.state ? editComment() : handlePostComment(e);
+                    }}
                   >
                     <textarea
                       className="textarea w-full p-1 rounded text-md resize-none border focus:outline-none  border-gray-800"
-                      placeholder="Add a comment..."
+                      placeholder={
+                        isEditing.state
+                          ? "Edit the text here..."
+                          : "Add a comment..."
+                      }
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                     />
                     <button className="btn btn-primary rounded-full btn-sm text-white px-4">
-                      {isCommenting ? (
+                      {isCommenting || isEditingComment ? (
                         <span className="loading loading-spinner loading-md"></span>
                       ) : (
                         "Post"

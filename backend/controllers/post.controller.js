@@ -5,7 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { v2 as cloudinary } from "cloudinary";
 import { Notification } from "../models/notification.model.js";
 import { User } from "../models/auth.model.js";
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -242,6 +242,36 @@ const deleteComment = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, newPost, "comment deleted"));
 });
 
+const editComment = asyncHandler(async (req, res) => {
+  const { commentId, postId, text } = req.body;
+
+  console.log("comment: ", commentId);
+
+  if (!commentId || !postId || !text) throw new ApiError(400, "missing data");
+
+  const post = await Post.findById(postId);
+
+  const comments = post.comments;
+
+  comments.map((comment) => {
+    if (comment._id == commentId) comment.text = text;
+  });
+
+  console.log(comments);
+
+  const newPost = await Post.findByIdAndUpdate(postId, {
+    $set: {
+      comments: comments,
+    },
+  });
+
+  if (!newPost) throw new ApiError(400, "incorrect postId");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, newPost, "comment edited successfully"));
+});
+
 export {
   createPost,
   deletePost,
@@ -252,4 +282,5 @@ export {
   getFollowingPosts,
   getUserPosts,
   deleteComment,
+  editComment,
 };

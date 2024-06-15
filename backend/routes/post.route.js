@@ -5,6 +5,7 @@ import {
   createPost,
   deleteComment,
   deletePost,
+  editComment,
   getAllLikedPosts,
   getAllPosts,
   getFollowingPosts,
@@ -24,5 +25,6 @@ router.get("/alllikedposts/:username", getAllLikedPosts);
 router.get("/allfollowingposts", getFollowingPosts);
 router.get("/posts/:username", getUserPosts);
 router.post("/deletecomment", deleteComment);
+router.post("/editcomment", editComment);
 
 export default router;
